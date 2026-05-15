@@ -72,4 +72,17 @@ public class CategoryController {
         categoryService.startOrStop(status,id);
         return Result.success();
     }
+
+    /**
+     * 删除菜品分类
+     *
+     * @param
+     * @return
+     */
+    @DeleteMapping
+    @ApiOperation("删除菜品分类")
+    public Result delete(Long id){
+        categoryService.delete(id);
+        return Result.success();
+    }
 }
