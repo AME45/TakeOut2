@@ -32,7 +32,7 @@ public class DishController {
     @PostMapping
     @ApiOperation("新增菜品")
     public Result addDish(@RequestBody DishDTO dishDTO) {
-        dishService.addDish(dishDTO);
+        dishService.addDishwithFlavor(dishDTO);
         return Result.success();
     }
 }

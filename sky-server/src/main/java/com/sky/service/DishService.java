@@ -5,5 +5,5 @@ import com.sky.dto.DishDTO;
 import com.sky.entity.Dish;
 
 public interface DishService {
-    void addDish(DishDTO dishDTO);
+    void addDishwithFlavor(DishDTO dishDTO);
 }
