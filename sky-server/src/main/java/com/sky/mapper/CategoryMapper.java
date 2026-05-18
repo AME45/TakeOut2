@@ -9,6 +9,8 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 @Mapper
 public interface CategoryMapper {
     Page<Category> pageQuery(CategoryPageQueryDTO categoryPageQueryDTO);
@@ -24,4 +26,6 @@ public interface CategoryMapper {
 
     @Delete("delete from category where id = #{id}")
     void delete(Long id);
+
+    List<Category> selectByType(Integer type);
 }
