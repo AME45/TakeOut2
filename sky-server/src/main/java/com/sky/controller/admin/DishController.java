@@ -84,4 +84,11 @@ public class DishController {
         dishService.update(dishDTO);
         return Result.success();
     }
+
+    @GetMapping("/list")
+    @ApiOperation("根据分类id查询菜品")
+    public Result<List<Dish>> selectAllDishByCategoryId(@RequestParam Integer categoryId) {
+        List<Dish> list = dishService.selectAllDishByCategoryId(categoryId);
+        return Result.success(list);
+    }
 }

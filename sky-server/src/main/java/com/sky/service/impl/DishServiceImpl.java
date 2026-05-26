@@ -105,5 +105,9 @@ public class DishServiceImpl implements DishService {
         dishVO.setFlavors(dishFlavor);
         return dishVO;
     }
+
+    public List<Dish> selectAllDishByCategoryId(Integer categoryId) {
+        return dishMapper.selectAllDishByCategoryId(categoryId);
+    }
 }
 
