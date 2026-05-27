@@ -9,6 +9,7 @@ import com.sky.vo.SetmealVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -26,4 +27,10 @@ public interface SetmealMapper {
     void addSetmeal(Setmeal setmeal);
 
     void deleteSetmeal(List<Integer> ids);
+
+    @AutoFill(value = OperationType.UPDATE)
+    @Update("update setmeal set status=#{status},update_time=#{updateTime},update_user=#{updateUser} where id = #{id}")
+    void startOrStop(Setmeal setmeal);
+
+    void update(Setmeal setmeal);
 }

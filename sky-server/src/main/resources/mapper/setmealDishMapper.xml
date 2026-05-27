@@ -9,7 +9,6 @@
         </foreach>
     </insert>
 
-
     <select id="getmealIdsByDishIds" resultType="java.lang.Long">
         select setmeal_id from setmeal_dish where id in
         <foreach collection="ids" item="id" separator="," open="(" close=")">
