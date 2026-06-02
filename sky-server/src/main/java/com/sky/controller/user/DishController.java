@@ -23,9 +23,9 @@ public class DishController {
 
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品列表")
-    public Result<List<DishVO>> selectByCategoryId(Integer categoryId) {
-        List<DishVO> Dishes = dishService.selectDishWithFlavorByCategoryId(categoryId);
-        return Result.success();
+    public Result<List<DishVO>> selectByCategoryId(Long categoryId) {
+        List<DishVO> dishes = dishService.selectDishWithFlavorByCategoryId(categoryId);
+        return Result.success(dishes);
     }
 
 }

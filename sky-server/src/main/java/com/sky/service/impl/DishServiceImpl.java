@@ -111,8 +111,12 @@ public class DishServiceImpl implements DishService {
         return dishMapper.selectAllDishByCategoryId(categoryId);
     }
 
-    public List<DishVO> selectDishWithFlavorByCategoryId(Integer categoryId) {
-        List<Dish> dish = dishMapper.selectDishWithFlavorByCategoryId(categoryId);
+    public List<DishVO> selectDishWithFlavorByCategoryId(Long categoryId) {
+        Dish dish1 = new Dish();
+        dish1.setCategoryId(categoryId);
+        dish1.setStatus(StatusConstant.ENABLE);
+
+        List<Dish> dish = dishMapper.selectDishWithFlavorByCategoryId(dish1);
         List<DishVO> dishVOS = new ArrayList<>();
         for(Dish d:dish){
             DishVO dishVO = new DishVO();
