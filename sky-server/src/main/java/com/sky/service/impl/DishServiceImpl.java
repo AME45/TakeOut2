@@ -126,5 +126,10 @@ public class DishServiceImpl implements DishService {
         }
         return dishVOS;
     }
+
+    public void StartOrStop(Integer status, Long id) {
+        Dish dish = Dish.builder().id(id).status(status).build();
+        dishMapper.StartOrStop(dish);
+    }
 }
 

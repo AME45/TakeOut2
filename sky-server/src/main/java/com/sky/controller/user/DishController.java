@@ -7,6 +7,7 @@ import com.sky.vo.DishVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,11 +21,20 @@ public class DishController {
 
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品列表")
     public Result<List<DishVO>> selectByCategoryId(Long categoryId) {
-        List<DishVO> dishes = dishService.selectDishWithFlavorByCategoryId(categoryId);
+        String key = "dish_" + categoryId;
+        List<DishVO> dishes = (List<DishVO>) redisTemplate.opsForValue().get(key);
+        if (dishes != null) {
+            return Result.success(dishes);
+        }
+
+        dishes = dishService.selectDishWithFlavorByCategoryId(categoryId);
+        redisTemplate.opsForValue().set(key, dishes);
         return Result.success(dishes);
     }
 

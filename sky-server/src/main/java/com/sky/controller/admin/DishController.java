@@ -1,6 +1,7 @@
 package com.sky.controller.admin;
 
 
+import com.sky.config.RedisConfiguration;
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
@@ -12,6 +13,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +27,8 @@ public class DishController {
 
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 新增菜品
@@ -35,6 +39,8 @@ public class DishController {
     @ApiOperation("新增菜品")
     public Result addDish(@RequestBody DishDTO dishDTO) {
         dishService.addDishwithFlavor(dishDTO);
+        String key = "dish_" + dishDTO.getCategoryId();
+        CleanCache(key);
         return Result.success();
     }
 
@@ -59,6 +65,7 @@ public class DishController {
     @ApiOperation("删除菜品")
     public Result<String> deleteDish(@RequestParam List<Long> ids) {
         dishService.delect(ids);
+        CleanCache("dish_*");
         return Result.success();
     }
 
@@ -82,6 +89,7 @@ public class DishController {
     @ApiOperation("修改菜品信息")
     public Result updateDish(@RequestBody DishDTO dishDTO) {
         dishService.update(dishDTO);
+        CleanCache("dish_*");
         return Result.success();
     }
 
@@ -91,4 +99,18 @@ public class DishController {
         List<Dish> list = dishService.selectAllDishByCategoryId(categoryId);
         return Result.success(list);
     }
+
+    @PostMapping("/status/{status}")
+    @ApiOperation("起售和停售")
+    public Result StartOrStop(@PathVariable Integer status,Long id){
+        dishService.StartOrStop(status,id);
+        CleanCache("dish_*");
+        return Result.success();
+    }
+
+    private void CleanCache(String pattern){
+        String keys = pattern;
+        redisTemplate.delete(keys);
+    }
+
 }

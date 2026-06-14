@@ -9,6 +9,7 @@ import com.sky.vo.DishVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import java.util.List;
 
@@ -38,4 +39,8 @@ public interface DishMapper {
     List<Dish> selectAllDishByCategoryId(Integer categoryId);
 
     List<Dish> selectDishWithFlavorByCategoryId(Dish dish);
+
+    @Update("update dish set status = #{status} where id = #{id}")
+    @AutoFill(value = OperationType.UPDATE)
+    void StartOrStop(Dish dish);
 }
