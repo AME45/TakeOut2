@@ -23,5 +23,6 @@
                 name = #{df.name},value = #{df.value},dish_id = #{dishId}
             </foreach>
         </set>
+        where id = #{id}
     </update>
 </mapper>

@@ -73,7 +73,7 @@ public class SetmealServiceImpl implements SetmealService {
     @Transactional
     public void update(SetmealDTO setmealDTO) {
         List<SetmealDish> setmealDish = setmealDTO.getSetmealDishes();
-        if(setmealDish.size()>0){
+        if(setmealDish != null && setmealDish.size()>0 ){
             setmealDishMapper.deleteSetmealDishById(setmealDTO.getId());
             for (SetmealDish setmealDish1 : setmealDish) {
                 setmealDish1.setSetmealId(setmealDTO.getId());

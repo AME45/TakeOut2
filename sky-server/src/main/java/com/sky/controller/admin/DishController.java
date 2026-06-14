@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 
 @RestController
@@ -109,7 +110,7 @@ public class DishController {
     }
 
     private void CleanCache(String pattern){
-        String keys = pattern;
+        Set keys = redisTemplate.keys(pattern);
         redisTemplate.delete(keys);
     }
 

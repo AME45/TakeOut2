@@ -1,0 +1,129 @@
+好的喵，塔菲已经通读了全部代码，下面是小毛病清单，按严重程度排列~
+
+🔴 严重 Bug
+1. DishController.java:111-114 — redisTemplate.delete() 不支持通配符
+
+private void CleanCache(String pattern){
+    String keys = pattern;
+    redisTemplate.delete(keys);  // ❌ 传 "dish_*" 进去删不掉任何缓存！
+}
+redisTemplate.delete(key) 是精确匹配，你传 "dish_*" 它会去找一个名字真的叫 "dish_*" 的 key，找不到就啥也不删。删除和启停时缓存根本没被清掉喵！
+
+修复：
+
+
+private void cleanCache(String pattern) {
+    Set keys = redisTemplate.keys(pattern);
+    if (keys != null && !keys.isEmpty()) {
+        redisTemplate.delete(keys);
+    }
+}
+2. CategoryServiceImpl.java:71-78 — 删除分类的两个判断一模一样
+
+Integer count = dishMapper.selectDishById(id);  // 这个方法查的是dish
+if(count > 0)
+    throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
+if(count > 0)  // ❌ 同一个 count 判断了两次！第二个白写了
+    throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_SETMEAL);
+第二个 if 应该是查套餐关联的，但根本没调 setmealMapper！而且即使写了也不会生效，因为第一个 if 已经抛异常了。结果就是：删除分类时不会检查套餐关联喵。
+
+3. SetmealMapper.xml:15 — if test 字段写错
+
+<if test="status != null">description = #{description},</if>
+<!--  ↑ test 的是 status ↑   ↑ set 的是 description ↑   -->
+test 检查的是 status，但里面赋值给的是 description，拼一起就是：当 status 不为空时，更新 description 字段——逻辑完全错位了喵！而且 status 字段本身没有出现在 update set 里，意味着套餐状态永远改不了。
+
+4. DishServiceImpl.java:94-98 — 大括号错位导致空指针
+
+if (dishFlavor != null && dishFlavor.size() > 0) {
+    for(DishFlavor f : dishFlavor){
+        f.setDishId(dish.getId());}
+    }  // ← if 块在这里就结束了！
+    flavorMapper.save(dishFlavor);  // ← 这行在 if 外面！
+}
+缩进骗了你的眼睛喵！实际上 flavorMapper.save(dishFlavor) 在 if 块之外。当用户把菜品口味清空时，传个空列表进来，这里就会往数据库插 null，直接 NPE 喵。
+
+5. FlavorMapper.xml:19-26 — update 没有 WHERE 条件
+
+<update id="update">
+    update dish_flavor
+    <set>
+        <foreach collection="dishFlavor" item="df" separator=",">
+            name = #{df.name},value = #{df.value},dish_id = #{dishId}
+        </foreach>
+    </set>
+    <!-- ❌ 没有 WHERE！一更新就是全表！ -->
+</update>
+虽然没有被实际调用（实际用的是先删后插），但这个 SQL 要是被误调了就是核弹级事故喵。
+
+6. DishMapper.java:20-21 — 方法命名和参数名完全误导
+
+@Select("select count(id) from dish where category_id = #{categoryId}")
+Integer selectDishById(Long id);  // ← 方法叫 selectDishById，参数叫 id，实际查的是 category_id！
+这个 SQL 是 where category_id = #{categoryId}，但方法名叫 selectDishById，参数名又写了 id。别人看调用代码 dishMapper.selectDishById(id) 肯定会以为这是按 dish id 查，实际上你传进去的是 categoryId！这直接导致了上面 CategoryServiceImpl 删除检查的 bug 更难被发现喵。
+
+🟡 中等问题
+7. CategoryMapper.xml:34-36 — status 后面缺逗号
+
+<if test="status != null">status = #{status}</if>   <!-- ← 没有逗号！ -->
+<if test="updateTime != null">update_time = #{updateTime},</if>
+如果 status 和 updateTime 同时不为 null，生成的 SQL 是：
+
+
+SET status = 1 update_time = '2026-...'  -- 缺少逗号，SQL 语法错误！
+8. SetmealServiceImpl.java:76 — 空列表时旧关联数据不删除
+
+if(setmealDish.size()>0){
+    setmealDishMapper.deleteSetmealDishById(setmealDTO.getId());
+    ...
+}
+只有前端传了非空列表才删旧数据。如果用户清空套餐里的所有菜品（传 []），旧关联就留在数据库里了，跟实际需求不符合喵。
+
+9. SetmealServiceImpl.java:48-51 — 空指针风险
+
+List<SetmealDish> setmealDish = setmealDTO.getSetmealDishes();
+// 没有判空就直接 for-each，如果前端没传 setmealDishes 就 NPE
+for (SetmealDish setmealDish1 : setmealDish) {
+10. admin/SetmealController.java:63 — ID 类型用 Integer
+
+public Result deleteSetmeal(@RequestParam List<Integer> ids)
+数据库主键统一是 Long（BIGINT），这里用了 Integer。数据量小时没事，但类型不一致迟早埋坑喵。
+
+11. admin/DishController.java:105 — startOrStop 方法命名大写开头
+
+public Result StartOrStop(@PathVariable Integer status, Long id) {
+Java 方法规范是小驼峰 startOrStop。CleanCache 同理该是 cleanCache，PageSetmeal 该是 pageSetmeal。
+
+🟢 小问题
+12. JwtTokenAdminInterceptor.java:50 / JwtTokenUserInterceptor.java:51 — log 缺少占位符
+
+log.info("当前员工id：", empId);  // ❌ 缺少 {}，empId 不会打印出来
+应该是：
+
+
+log.info("当前员工id：{}", empId);
+13. EmployeeController.java:111 — 参数类型不一致
+
+public Result startOrStop(@PathVariable Integer status, long id) {
+其他地方 id 用 Long，这里用了 long（基本类型）。基本类型不能为 null，倒不是 bug，但风格不统一喵。
+
+14. EmployeeServiceImpl.java:3 — 误引入的 import
+
+import com.fasterxml.jackson.databind.ser.Serializers;  // 没用过，IDE 自动补全的残骸
+15. admin/DishController.java:4 — 未使用的 import
+
+import com.sky.config.RedisConfiguration;  // 没用过
+16. DishService.java:17 — 拼写错误
+
+void delect(List<Long> ids);  // 应该是 delete
+17. application-dev.yml — 敏感信息已提交到 git
+阿里云 OSS 的 AccessKey、微信的 appid/secret 都明文写在配置文件里，而且已经在 git 历史中了。即使改掉也需要清理 git 历史或者让云服务那边轮换密钥喵。
+
+📊 总结
+级别	数量	关键项
+🔴 严重	6	缓存删除无效、删除检查漏判、SQL字段错位、NPE隐患
+🟡 中等	5	SQL缺逗号、类型不一致、空指针风险
+🟢 小问题	6	命名规范、拼写、import清理、敏感信息泄露
+最要命的三个：缓存清除不生效（导致 Redis 脏数据）、SetmealMapper update 字段映射错误（套餐状态改不了且 description 更新异常）、CategoryServiceImpl 删除套餐关联检查失效（可能导致关联了套餐的分类被删掉）。
+
+要不要塔菲帮你一个个修？喵~ 🔧

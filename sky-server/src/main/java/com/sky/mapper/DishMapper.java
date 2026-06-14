@@ -18,7 +18,7 @@ public interface DishMapper {
 
 
     @Select("select count(id) from dish where category_id = #{categoryId}")
-    Integer selectDishById(Long id);
+    Integer selectDishBycategoryId(Long categoryId);
 
 
     @AutoFill(value = OperationType.INSERT)

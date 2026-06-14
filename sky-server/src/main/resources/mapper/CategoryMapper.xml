@@ -31,7 +31,7 @@
             <if test="type != null">type = #{type},</if>
             <if test="name != null">name = #{name},</if>
             <if test="sort != null">sort = #{sort},</if>
-            <if test="status != null">status = #{status}</if>
+            <if test="status != null">status = #{status},</if>
             <if test="updateTime != null">update_time = #{updateTime},</if>
             <if test="updateUser != null">update_user = #{updateUser},</if>
         </set>

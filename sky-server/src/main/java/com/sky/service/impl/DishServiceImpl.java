@@ -94,8 +94,9 @@ public class DishServiceImpl implements DishService {
         if (dishFlavor != null && dishFlavor.size() > 0) {
             for(DishFlavor f : dishFlavor){
                 f.setDishId(dish.getId());}
-            }
             flavorMapper.save(dishFlavor);
+            }
+            
         }
 
     public DishVO selectById(Long id) {
