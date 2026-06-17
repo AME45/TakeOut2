@@ -1,9 +1,7 @@
 package com.sky.mapper;
 
 import com.sky.entity.AddressBook;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.List;
 
@@ -22,4 +20,18 @@ public interface AddressbookMapper {
 
     @Select("select * from address_book where id = #{id}")
     AddressBook getById(Long id);
+
+    @Delete("delete from address_book where id = #{id}")
+    void deleteById(Long id);
+
+    void updateById(AddressBook addressBook);
+
+    @Select("select * from address_book where user_id = #{userId} and is_default = 1")
+    AddressBook getDefaultAddressBook(Long userId);
+
+    @Update("update address_book set is_default = 0 where user_id = #{userId}")
+    void setAllNotDefault(Long userId);
+
+    @Update("update address_book set is_default = 1 where id = #{id}")
+    void setDefault(Long id);
 }

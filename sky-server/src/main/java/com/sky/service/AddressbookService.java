@@ -10,4 +10,12 @@ public interface AddressbookService {
     List<AddressBook> getAddressBookList(AddressBook addressBook);
 
     AddressBook getById(Long id);
+
+    void deleteById(Long id);
+
+    void updateById(AddressBook addressBook);
+
+    void updateDefaultAddressBookById(AddressBook addressBook);
+
+    AddressBook getDefaultAddressBook(Long userId);
 }
