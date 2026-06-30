@@ -24,7 +24,11 @@ public interface OrderService {
      */
     void paySuccess(String outTradeNo);
 
-    OrderVO orderDetail(Long orderId);
+    OrderVO orderDetail(Long id);
 
     PageResult orderList(int page, int pageSize, Integer status);
+
+    void cancel(Long id);
+
+    void orderAgain(Long id);
 }

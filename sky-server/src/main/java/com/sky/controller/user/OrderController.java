@@ -51,8 +51,8 @@ public class OrderController {
 
     @GetMapping("/orderDetail/{id}")
     @ApiOperation("订单详细")
-    public Result<OrderVO> orderDetail(@PathVariable Long orderId){
-        OrderVO orderVO = orderService.orderDetail(orderId);
+    public Result<OrderVO> orderDetail(@PathVariable Long id){
+        OrderVO orderVO = orderService.orderDetail(id);
         return Result.success(orderVO);
 
     }
@@ -62,5 +62,19 @@ public class OrderController {
     public Result<PageResult> orderList(int page, int pageSize, Integer status){
         PageResult pageResult = orderService.orderList(page,pageSize,status);
         return Result.success(pageResult);
+    }
+
+    @PutMapping("/cancel/{id}")
+    @ApiOperation("取消订单")
+    public Result CancelOrder(@PathVariable Long id){
+        orderService.cancel(id);
+        return Result.success();
+    }
+
+    @PostMapping("/repetition/{id}")
+    @ApiOperation("再来一单")
+    public Result orderAgain(@PathVariable Long id){
+        orderService.orderAgain(id);
+        return Result.success();
     }
 }

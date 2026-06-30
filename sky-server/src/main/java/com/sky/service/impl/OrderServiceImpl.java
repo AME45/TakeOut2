@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -169,16 +170,16 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(orders);
     }
 
-    public OrderVO orderDetail(Long orderId) {
-        Orders orders = orderMapper.getById(orderId);
+    public OrderVO orderDetail(Long id) {
+        Orders orders = orderMapper.getById(id);
         OrderVO orderVO = new OrderVO();
         BeanUtils.copyProperties(orders,orderVO);
-        List<OrderDetail> list = orderDetailMapper.getByOrderId(orderId);
+        List<OrderDetail> list = orderDetailMapper.getByOrderId(id);
         orderVO.setOrderDetailList(list);
         return orderVO;
     }
 
-    public PageResult orderList(int page, int pageSize, Integer status) {
+    public PageResult orderList(int page,int pageSize,Integer status) {
         PageHelper.startPage(page, pageSize);
         OrdersPageQueryDTO dto = new OrdersPageQueryDTO();
         dto.setUserId(BaseContext.getCurrentId());
@@ -195,5 +196,24 @@ public class OrderServiceImpl implements OrderService {
             }
         }
         return new PageResult(page1.getTotal(), list);
+    }
+
+    public void cancel(Long id) {
+        orderMapper.cancel(Orders.CANCELLED,id);
+    }
+
+    public void orderAgain(Long id) {
+        Long userId = BaseContext.getCurrentId();
+
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(id);
+        List<ShoppingCart> shoppingCartList = orderDetailList.stream().map(x ->{
+                    ShoppingCart shoppingCart = new ShoppingCart();
+                    // 将原订单详情里面的菜品信息重新复制到购物车对象中
+                    BeanUtils.copyProperties(x, shoppingCart, "id");
+                    shoppingCart.setUserId(userId);
+                    shoppingCart.setCreateTime(LocalDateTime.now());
+                    return shoppingCart;
+                }).collect(Collectors.toList());
+        shoppingcartMapper.insertBatch(shoppingCartList);
     }
 }

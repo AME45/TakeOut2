@@ -51,6 +51,9 @@ public interface OrderMapper {
 
 
     Page<Orders> orderList(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    @Update("update orders set status = #{status} where id = #{id} ")
+    void cancel(Integer status, Long id);
 }
 
 
