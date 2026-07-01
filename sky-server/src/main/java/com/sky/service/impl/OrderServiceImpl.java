@@ -3,11 +3,10 @@ package com.sky.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -17,6 +16,7 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import org.springframework.beans.BeanUtils;
@@ -73,6 +73,10 @@ public class OrderServiceImpl implements OrderService {
         orders.setNumber(String.valueOf(System.currentTimeMillis()));
         orders.setPhone(addressBook.getPhone());
         orders.setConsignee(addressBook.getConsignee());
+        orders.setAddress(addressBook.getProvinceName()
+                + addressBook.getCityName()
+                + addressBook.getDistrictName()
+                + addressBook.getDetail());
         orders.setUserId(BaseContext.getCurrentId());
 
         orderMapper.insert(orders);
@@ -216,4 +220,86 @@ public class OrderServiceImpl implements OrderService {
                 }).collect(Collectors.toList());
         shoppingcartMapper.insertBatch(shoppingCartList);
     }
+
+    //------------------------------------------------------------------------------------------------------------
+    public PageResult conditionSearch(OrdersPageQueryDTO ordersPageQueryDTO) {
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+        Page<Orders> ordersPage = orderMapper.pageQuery(ordersPageQueryDTO);
+        // 部分订单状态，需要额外返回订单菜品信息，将Orders转化为OrderVO
+        List<OrderVO> orderVOList = getOrderVOList(ordersPage);
+
+        return new PageResult(ordersPage.getTotal(), orderVOList);
+    }
+
+
+
+    private List<OrderVO> getOrderVOList(Page<Orders> page) {
+        // 需要返回订单菜品信息，自定义OrderVO响应结果
+        List<OrderVO> orderVOList = new ArrayList<>();
+
+        List<Orders> ordersList = page.getResult();
+        if (!CollectionUtils.isEmpty(ordersList)) {
+            for (Orders orders : ordersList) {
+                // 将共同字段复制到OrderVO
+                OrderVO orderVO = new OrderVO();
+                BeanUtils.copyProperties(orders, orderVO);
+                String orderDishes = getOrderDishesStr(orders);
+
+                // 将订单菜品信息封装到orderVO中，并添加到orderVOList
+                orderVO.setOrderDishes(orderDishes);
+                orderVOList.add(orderVO);
+            }
+        }
+        return orderVOList;
+    }
+
+    /**
+     * 根据订单id获取菜品信息字符串
+     *
+     * @param orders
+     * @return
+     */
+    private String getOrderDishesStr(Orders orders) {
+        // 查询订单菜品详情信息（订单中的菜品和数量）
+        List<OrderDetail> orderDetailList = orderDetailMapper.getByOrderId(orders.getId());
+
+        // 将每一条订单菜品信息拼接为字符串（格式：宫保鸡丁*3；）
+        List<String> orderDishList = orderDetailList.stream().map(x -> {
+            String orderDish = x.getName() + "*" + x.getNumber() + ";";
+            return orderDish;
+        }).collect(Collectors.toList());
+
+        // 将该订单对应的所有菜品信息拼接在一起
+        return String.join("", orderDishList);
+    }
+
+    public OrderStatisticsVO orderstatistics() {
+        OrderStatisticsVO orderStatisticsVO = new OrderStatisticsVO();
+        orderStatisticsVO.setConfirmed(orderMapper.orderStatistics(Orders.CONFIRMED));
+        orderStatisticsVO.setToBeConfirmed(orderMapper.orderStatistics(Orders.TO_BE_CONFIRMED));
+        orderStatisticsVO.setDeliveryInProgress(orderMapper.orderStatistics(Orders.DELIVERY_IN_PROGRESS));
+        return orderStatisticsVO;
+    }
+
+    public void cancelAdmin(OrdersCancelDTO ordersCancelDTO) {
+        orderMapper.cancelAdmin(ordersCancelDTO.getCancelReason(),ordersCancelDTO.getId(),Orders.CANCELLED);
+    }
+
+    public void orderRejection(OrdersRejectionDTO ordersRejectionDTO) {
+        orderMapper.orderRejection(ordersRejectionDTO.getRejectionReason(),ordersRejectionDTO.getId(),Orders.CANCELLED);
+    }
+
+    public void orderConfirm(OrdersConfirmDTO ordersConfirmDTO) {
+        ordersConfirmDTO.setStatus(Orders.CONFIRMED);
+        orderMapper.orderConfirm(ordersConfirmDTO.getId(),ordersConfirmDTO.getStatus());
+    }
+
+    public void orderDelevery(Long id) {
+        orderMapper.orderDelevery(id,Orders.DELIVERY_IN_PROGRESS);
+    }
+
+    public void orderComplete(Long id) {
+        orderMapper.orderComplete(id,Orders.COMPLETED);
+    }
+
 }
