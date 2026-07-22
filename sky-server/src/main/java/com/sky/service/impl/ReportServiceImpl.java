@@ -79,10 +79,10 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
             Map map = new HashMap();
             map.put("end", endTime);
-            Integer TotalUser = userMapper.countbyDate(map);
+            Integer TotalUser = userMapper.countbyMap(map);
 
             map.put("begin", beginTime);
-            Integer NewUser = userMapper.countbyDate(map);
+            Integer NewUser = userMapper.countbyMap(map);
 
             TotalUser = TotalUser == null ? 0 : TotalUser;
             NewUser = NewUser == null ? 0 : NewUser;
