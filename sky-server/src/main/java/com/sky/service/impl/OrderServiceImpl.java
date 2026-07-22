@@ -314,4 +314,18 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.orderComplete(id,Orders.COMPLETED);
     }
 
+    public void reminder(Long id) {
+
+        Orders orders = orderMapper.getById(id);
+        if (orders == null) {
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+        //websocket
+        Map map = new HashMap();
+        map.put("type", 2);
+        map.put("orderId",id);
+        map.put("content","订单号"+ orders.getNumber());
+        webSocketServer.sendToAllClient(JSONObject.toJSONString(map));
+    }
+
 }
